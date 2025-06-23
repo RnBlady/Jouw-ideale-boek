@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Jouw ideale boek</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>Jouw ideale boek</h1>
+  <form id="boekForm">
+    <div>
+      <label for="niveau">Niveau:</label>
+      <select id="niveau" required>
+        <option value="">Kies...</option>
+        <option value="A1–A2">A1–A2 (Beginner)</option>
+        <option value="B1">B1 (Pre-intermediate)</option>
+      </select>
+    </div>
+    <div>
+      <label for="genre">Genre:</label>
+      <select id="genre" required>
+        <option value="">Kies...</option>
+        <option value="Avontuur">🧭 Avontuur</option>
+        <option value="Romantiek">💕 Romantiek</option>
+        <option value="Mysterie / Thriller">🕵️ Mysterie / Thriller</option>
+        <option value="Sciencefiction / Fantasy">🪄 Sciencefiction / Fantasy</option>
+        <option value="Historisch">🏰 Historisch</option>
+        <option value="Humor">🎭 Humor</option>
+        <option value="Non-fictie / Informatief">🧠 Non-fictie / Informatief</option>
+        <option value="Dierenverhalen">🐾 Dierenverhalen</option>
+        <option value="Reizen & Culturen">🌍 Reizen & Culturen</option>
+        <option value="Probleemoplossend denken / Puzzels">🧩 Probleemoplossend denken / Puzzels</option>
+      </select>
+    </div>
+    <button type="submit">Toon boekentips</button>
+  </form>
+  <div id="tips"></div>
+  <div id="logboek"></div>
+  <div id="tipFormSection"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
+body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; }
+.container { max-width: 700px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px #0001;}
+form div { margin-bottom: 14px;}
+label { display: block; font-weight: bold;}
+select, button, input[type="text"] { width: 100%; font-size: 1em; padding: 8px; margin-top: 2px;}
+button { background: #275f8e; color: #fff; border: none; border-radius: 4px; cursor: pointer;}
+button:hover { background: #18446b;}
+.tips-list { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px;}
+.tips-list .boek { width: 160px; background: #eef3f8; border-radius: 7px; padding: 10px; text-align: center;}
+.tips-list .boek img { width: 90px; height: 130px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;}
+.boek-title { font-size: 1em; font-weight: bold; margin: 6px 0;}
+.boek-author { font-size: 0.95em; color: #555;}
+.add-log { margin-top: 8px; font-size: 0.96em;}
+/* logboek e.d. idem */
+// Vul hieronder het juiste script-ID van je eigen Google Apps Script webapp in!
+const SHEET_API = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
+// Alle boeken worden via het Google Sheet backend opgehaald, maar hieronder een fallback voor als backend niet bereikbaar is:
+const booksFallback = {
+  "A1–A2": {
+    "Avontuur": [
+      {title:"The Treasure of the Loch Ness Monster", author:"Lari Don", cover:"https://covers.openlibrary.org/b/id/9788928-L.jpg"},
+      {title:"The Enormous Crocodile", author:"Roald Dahl", cover:"https://covers.openlibrary.org/b/id/10614653-L.jpg"},
+      {title:"The Lighthouse Keeper’s Lunch", author:"Ronda Armitage", cover:"https://covers.openlibrary.org/b/id/10814797-L.jpg"},
+      {title:"The Pirates Next Door", author:"Jonny Duddle", cover:"https://covers.openlibrary.org/b/id/8393670-L.jpg"},
+      {title:"The Bear Scouts", author:"Stan & Jan Berenstain", cover:"https://covers.openlibrary.org/b/id/10507094-L.jpg"}
+    ],
+    // ... voeg hier ALLE genres en boeken toe volgens jouw lijst!
+  },
+  "B1": {
+    "Avontuur": [
+      {title:"The Wild Robot", author:"Peter Brown", cover:"https://covers.openlibrary.org/b/id/8378225-L.jpg"},
+      {title:"Island of the Blue Dolphins", author:"Scott O'Dell", cover:"https://covers.openlibrary.org/b/id/8228821-L.jpg"},
+      {title:"The Miraculous Journey of Edward Tulane", author:"Kate DiCamillo", cover:"https://covers.openlibrary.org/b/id/8230994-L.jpg"},
+      {title:"Hatchet", author:"Gary Paulsen", cover:"https://covers.openlibrary.org/b/id/8228742-L.jpg"},
+      {title:"The Invention of Hugo Cabret", author:"Brian Selznick", cover:"https://covers.openlibrary.org/b/id/8228706-L.jpg"}
+    ],
+    // ... voeg hier ALLE genres en boeken toe volgens jouw lijst!
+  }
+};
+
+// Backend: Boekentips ophalen uit Google Sheet
+async function fetchSheetTips(niveau, genre) {
+  const url = `${SHEET_API}?action=getTips&niveau=${encodeURIComponent(niveau)}&genre=${encodeURIComponent(genre)}`;
+  const res = await fetch(url);
+  return await res.json();
+}
+
+// Backend: Boekentip delen
+async function shareTip(tip) {
+  await fetch(SHEET_API, {
+    method: "POST",
+    body: JSON.stringify({...tip, action:"addTip"}),
+    headers: {"Content-Type":"application/json"}
+  });
+}
+
+// Backend: Boek loggen
+async function addToLogboek(log) {
+  await fetch(SHEET_API, {
+    method: "POST",
+    body: JSON.stringify({...log, action:"addLog"}),
+    headers: {"Content-Type":"application/json"}
+  });
+}
+
+// Boekentips tonen
+document.getElementById("boekForm").onsubmit = async function(e){
+  e.preventDefault();
+  const niveau = document.getElementById("niveau").value;
+  const genre = document.getElementById("genre").value;
+  let tipList = booksFallback[niveau]?.[genre] || [];
+  // Voeg gedeelde tips toe
+  try {
+    const shared = await fetchSheetTips(niveau, genre);
+    tipList = tipList.concat(shared);
+  } catch(e){
+    // als geen backend, gewoon lokale lijst tonen
+  }
+  document.getElementById("tips").innerHTML = tipList.length
+    ? `<div class="tips-list">${tipList.map(tip=>`
+      <div class="boek">
+        <img src="${tip.cover||'https://via.placeholder.com/90x130?text=No+Cover'}" alt="cover">
+        <div class="boek-title">${tip.title}</div>
+        <div class="boek-author">${tip.author}</div>
+        <button class="add-log" onclick="window.addToLogboekUI('${niveau}','${genre}','${tip.title.replace(/'/g,"&apos;")}', '${tip.author.replace(/'/g,"&apos;")}', '${tip.cover||''}')">➕ Log</button>
+      </div>
+    `).join('')}</div>`
+    : "Geen tips gevonden.";
+};
+
+// Logboek bijhouden (frontend + backend)
+window.addToLogboekUI = async (niveau, genre, title, author, cover) => {
+  const log = {niveau, genre, title, author, cover, timestamp: new Date().toISOString()};
+  await addToLogboek(log);
+  alert("Toegevoegd aan je leeslogboek!");
+  // eventueel logboek opnieuw ophalen/tonen
+}
+
+// Boekentip delen (frontend + backend)
+document.getElementById("tipFormSection").innerHTML = `
+  <form id="tipForm">
+    <h3>💡 Deel jouw boekentip!</h3>
+    <input type="text" id="tipTitle" placeholder="Titel" required>
+    <input type="text" id="tipAuthor" placeholder="Auteur" required>
+    <input type="text" id="tipCover" placeholder="Cover URL (optioneel)">
+    <button type="submit">Tip delen</button>
+    <div id="tipConfirm"></div>
+  </form>
+`;
+
+document.getElementById("tipForm").onsubmit = async function(e){
+  e.preventDefault();
+  const niveau = document.getElementById("niveau").value;
+  const genre = document.getElementById("genre").value;
+  const tip = {
+    niveau,
+    genre,
+    title: document.getElementById("tipTitle").value,
+    author: document.getElementById("tipAuthor").value,
+    cover: document.getElementById("tipCover").value
+  };
+  await shareTip(tip);
+  document.getElementById("tipConfirm").innerText = "Tip gedeeld!";
+  document.getElementById("tipForm").reset();
+};
+# Jouw ideale boek
+
+Een interactieve webapp voor boekentips Engels op maat, met logboek en gedeelde tips via Google Sheets.
+
+## Features
+
+- Boekentips per niveau en genre, met covers
+- Leerlingen kunnen eigen boekentips delen (via Google Sheets backend)
+- Leeslogboek bijhouden (via Google Sheets)
+- Eenvoudig uit te breiden
+
+## Instructies
+
+1. Zet een [Google Sheet](https://docs.google.com/spreadsheets/u/0/) op met tabblad `Tips` (Niveau, Genre, Titel, Auteur, Cover) en tabblad `Logboek`.
+2. Voeg het Apps Script toe (zie onder).
+3. Deploy als web app (IEDEREEN met de link mag bewerken).
+4. Zet de web app URL in `app.js` bij `SHEET_API`.
+
+## Apps Script (Google Sheet backend)
+
+Plak dit in je Google Sheet onder Extensies > Apps Script:
+
+```javascript
+function doGet(e) {
+  const action = e.parameter.action;
+  const niveau = e.parameter.niveau;
+  const genre = e.parameter.genre;
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Tips");
+  if (action === "getTips") {
+    const data = sheet.getDataRange().getValues();
+    return ContentService.createTextOutput(JSON.stringify(
+      data.filter(r=>r[0]===niveau&&r[1]===genre).map(r=>({
+        niveau:r[0], genre:r[1], title:r[2], author:r[3], cover:r[4]
+      }))
+    )).setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput("[]").setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  const body = JSON.parse(e.postData.contents);
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Tips");
+  if (body.action === "addTip") {
+    sheet.appendRow([body.niveau, body.genre, body.title, body.author, body.cover||""]);
+    return ContentService.createTextOutput("OK");
+  }
+  if (body.action === "addLog") {
+    let logSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Logboek");
+    if(!logSheet) logSheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Logboek");
+    logSheet.appendRow([body.niveau, body.genre, body.title, body.author, body.cover||"", body.timestamp]);
+    return ContentService.createTextOutput("OK");
+  }
+  return ContentService.createTextOutput("ERR");
+}
+```
+
+## Boeken toevoegen
+
+- Vul je boeken in in het Google Sheet (tabblad `Tips`) of in de `booksFallback` in `app.js` voor fallback.
+
+## Voorbeeld
+
+Zie [Open Library](https://openlibrary.org/) voor covers.
+
+---
+
+Vragen of hulp? Maak een issue aan of neem contact op!
