@@ -1,0 +1,14 @@
+body { font-family: Arial, sans-serif; background: #f8fafc; margin: 0; }
+.container { max-width: 700px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px #0001;}
+form div { margin-bottom: 14px;}
+label { display: block; font-weight: bold;}
+select, button, input[type="text"] { width: 100%; font-size: 1em; padding: 8px; margin-top: 2px;}
+button { background: #275f8e; color: #fff; border: none; border-radius: 4px; cursor: pointer;}
+button:hover { background: #18446b;}
+.tips-list { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 18px;}
+.tips-list .boek { width: 160px; background: #eef3f8; border-radius: 7px; padding: 10px; text-align: center;}
+.tips-list .boek img { width: 90px; height: 130px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;}
+.boek-title { font-size: 1em; font-weight: bold; margin: 6px 0;}
+.boek-author { font-size: 0.95em; color: #555;}
+.add-log { margin-top: 8px; font-size: 0.96em;}
+/* logboek e.d. idem */

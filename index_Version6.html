@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Jouw ideale boek</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>Jouw ideale boek</h1>
+  <form id="boekForm">
+    <div>
+      <label for="niveau">Niveau:</label>
+      <select id="niveau" required>
+        <option value="">Kies...</option>
+        <option value="A1–A2">A1–A2 (Beginner)</option>
+        <option value="B1">B1 (Pre-intermediate)</option>
+      </select>
+    </div>
+    <div>
+      <label for="genre">Genre:</label>
+      <select id="genre" required>
+        <option value="">Kies...</option>
+        <option value="Avontuur">🧭 Avontuur</option>
+        <option value="Romantiek">💕 Romantiek</option>
+        <option value="Mysterie / Thriller">🕵️ Mysterie / Thriller</option>
+        <option value="Sciencefiction / Fantasy">🪄 Sciencefiction / Fantasy</option>
+        <option value="Historisch">🏰 Historisch</option>
+        <option value="Humor">🎭 Humor</option>
+        <option value="Non-fictie / Informatief">🧠 Non-fictie / Informatief</option>
+        <option value="Dierenverhalen">🐾 Dierenverhalen</option>
+        <option value="Reizen & Culturen">🌍 Reizen & Culturen</option>
+        <option value="Probleemoplossend denken / Puzzels">🧩 Probleemoplossend denken / Puzzels</option>
+      </select>
+    </div>
+    <button type="submit">Toon boekentips</button>
+  </form>
+  <div id="tips"></div>
+  <div id="logboek"></div>
+  <div id="tipFormSection"></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
